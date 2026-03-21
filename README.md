@@ -12,9 +12,7 @@ Millions of students underperform not because of ability, but due to preventable
 ---
 
 ## API Endpoint
-> 🔗 _Public URL (added after deployment in Task 2)_
-
-Swagger UI: `<public-url>/docs`
+🔗 **https://mobile-reg-app-analysis.onrender.com/docs**
 
 ---
 

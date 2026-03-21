@@ -35,7 +35,7 @@ app.add_middleware(
         "http://localhost:8080",
         "http://10.0.2.2",           # Android emulator → host machine
         "http://10.0.2.2:8000",
-        "https://student-score-api.onrender.com",  # production origin
+        "https://mobile-reg-app-analysis.onrender.com",  # production origin
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
