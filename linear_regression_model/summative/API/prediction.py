@@ -2,9 +2,10 @@ import io
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from sklearn.linear_model import SGDRegressor
 from sklearn.model_selection import train_test_split
@@ -35,13 +36,17 @@ educational interventions before performance declines further.
 
 ---
 
+### Model Performance
+
+| Model | RMSE | R² |
+|-------|------|----|
+| **Linear Regression** ✅ | **2.13** | **0.68** |
+| Random Forest | 2.20 | 0.66 |
+| Decision Tree | 2.54 | 0.54 |
+
 ### Input Categories
 - **Numeric:** Hours studied, attendance, sleep, previous scores, tutoring, physical activity
 - **Categorical:** Parental involvement, resources, motivation, income, school type, and more
-
-### Model
-- **Algorithm:** SGD Linear Regression (scikit-learn)
-- **Test RMSE:** 2.13 points | **R²:** 0.68
 """
 
 tags_metadata = [
@@ -68,6 +73,8 @@ app = FastAPI(
         "url": "https://mobile-reg-app-analysis.onrender.com",
     },
     openapi_tags=tags_metadata,
+    docs_url=None,   # We serve a custom /docs below
+    redoc_url="/redoc",
 )
 
 # ---------------------------------------------------------------------------
@@ -122,6 +129,72 @@ FEATURE_ORDER = [
 ]
 
 # ---------------------------------------------------------------------------
+# Named request body examples
+# ---------------------------------------------------------------------------
+EXAMPLE_HIGH_PERFORMER = {
+    "Hours_Studied": 35,
+    "Attendance": 95,
+    "Sleep_Hours": 8,
+    "Previous_Scores": 90,
+    "Tutoring_Sessions": 3,
+    "Physical_Activity": 4,
+    "Parental_Involvement": "High",
+    "Access_to_Resources": "High",
+    "Extracurricular_Activities": "Yes",
+    "Motivation_Level": "High",
+    "Internet_Access": "Yes",
+    "Family_Income": "High",
+    "Teacher_Quality": "High",
+    "School_Type": "Private",
+    "Peer_Influence": "Positive",
+    "Learning_Disabilities": "No",
+    "Parental_Education_Level": "Postgraduate",
+    "Distance_from_Home": "Near",
+}
+
+EXAMPLE_AT_RISK = {
+    "Hours_Studied": 5,
+    "Attendance": 62,
+    "Sleep_Hours": 5,
+    "Previous_Scores": 52,
+    "Tutoring_Sessions": 0,
+    "Physical_Activity": 1,
+    "Parental_Involvement": "Low",
+    "Access_to_Resources": "Low",
+    "Extracurricular_Activities": "No",
+    "Motivation_Level": "Low",
+    "Internet_Access": "No",
+    "Family_Income": "Low",
+    "Teacher_Quality": "Low",
+    "School_Type": "Public",
+    "Peer_Influence": "Negative",
+    "Learning_Disabilities": "Yes",
+    "Parental_Education_Level": "High School",
+    "Distance_from_Home": "Far",
+}
+
+EXAMPLE_AVERAGE = {
+    "Hours_Studied": 23,
+    "Attendance": 84,
+    "Sleep_Hours": 7,
+    "Previous_Scores": 73,
+    "Tutoring_Sessions": 0,
+    "Physical_Activity": 3,
+    "Parental_Involvement": "Low",
+    "Access_to_Resources": "High",
+    "Extracurricular_Activities": "No",
+    "Motivation_Level": "Low",
+    "Internet_Access": "Yes",
+    "Family_Income": "Low",
+    "Teacher_Quality": "Medium",
+    "School_Type": "Public",
+    "Peer_Influence": "Positive",
+    "Learning_Disabilities": "No",
+    "Parental_Education_Level": "High School",
+    "Distance_from_Home": "Near",
+}
+
+# ---------------------------------------------------------------------------
 # Pydantic models — input + response schemas (visible in Swagger UI)
 # ---------------------------------------------------------------------------
 class StudentInput(BaseModel):
@@ -146,31 +219,6 @@ class StudentInput(BaseModel):
     Learning_Disabilities:      Literal["Yes", "No"]             = Field(..., description="Whether the student has a diagnosed learning disability")
     Parental_Education_Level:   Literal["High School", "College", "Postgraduate"] = Field(..., description="Highest education level attained by parents")
     Distance_from_Home:         Literal["Near", "Moderate", "Far"] = Field(..., description="Distance from home to school")
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "Hours_Studied": 23,
-                "Attendance": 84,
-                "Sleep_Hours": 7,
-                "Previous_Scores": 73,
-                "Tutoring_Sessions": 0,
-                "Physical_Activity": 3,
-                "Parental_Involvement": "Low",
-                "Access_to_Resources": "High",
-                "Extracurricular_Activities": "No",
-                "Motivation_Level": "Low",
-                "Internet_Access": "Yes",
-                "Family_Income": "Low",
-                "Teacher_Quality": "Medium",
-                "School_Type": "Public",
-                "Peer_Influence": "Positive",
-                "Learning_Disabilities": "No",
-                "Parental_Education_Level": "High School",
-                "Distance_from_Home": "Near",
-            }
-        }
-    }
 
 
 class PredictionResponse(BaseModel):
@@ -219,6 +267,119 @@ def encode_input(data: StudentInput) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# Custom Swagger UI with branded CSS
+# ---------------------------------------------------------------------------
+CUSTOM_CSS = """
+<style>
+  /* ── Top bar ── */
+  .swagger-ui .topbar {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 12px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .swagger-ui .topbar-wrapper img { display: none; }
+  .swagger-ui .topbar-wrapper::before {
+    content: '🎓  Student Exam Score Predictor';
+    color: #e0e0e0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding-left: 24px;
+  }
+
+  /* ── Info title ── */
+  .swagger-ui .info .title { color: #0f3460; font-size: 2rem; }
+  .swagger-ui .info a { color: #0f3460; }
+
+  /* ── Tag section headers ── */
+  .swagger-ui .opblock-tag {
+    background: #f0f4ff;
+    border-radius: 8px;
+    border-left: 5px solid #0f3460;
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+  }
+
+  /* ── POST blocks ── */
+  .swagger-ui .opblock.opblock-post {
+    border-color: #0f3460;
+    background: rgba(15, 52, 96, 0.04);
+    border-radius: 8px;
+  }
+  .swagger-ui .opblock.opblock-post .opblock-summary-method {
+    background: #0f3460;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .swagger-ui .opblock.opblock-post .opblock-summary {
+    border-color: #0f3460;
+  }
+
+  /* ── GET blocks ── */
+  .swagger-ui .opblock.opblock-get {
+    border-color: #2d6a4f;
+    background: rgba(45, 106, 79, 0.04);
+    border-radius: 8px;
+  }
+  .swagger-ui .opblock.opblock-get .opblock-summary-method {
+    background: #2d6a4f;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  /* ── Execute button ── */
+  .swagger-ui .btn.execute {
+    background: #0f3460 !important;
+    border-color: #0f3460 !important;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .swagger-ui .btn.execute:hover {
+    background: #1a4a80 !important;
+  }
+
+  /* ── Response code badges ── */
+  .swagger-ui .responses-inner h4,
+  .swagger-ui .response-col_status { color: #0f3460; }
+
+  /* ── Schema section ── */
+  .swagger-ui section.models { border-radius: 8px; }
+  .swagger-ui section.models h4 { color: #0f3460; }
+
+  /* ── Example dropdown ── */
+  .swagger-ui .examples-select select {
+    border: 1px solid #0f3460;
+    border-radius: 4px;
+    color: #0f3460;
+    font-weight: 600;
+  }
+
+  /* ── General body ── */
+  body { background: #f8f9fc; }
+  .swagger-ui { font-family: 'Inter', 'Segoe UI', sans-serif; }
+</style>
+"""
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    html = get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title="Student Exam Score Predictor — API Docs",
+        swagger_ui_parameters={
+            "docExpansion": "list",          # all endpoints expanded on load
+            "filter": True,                  # search/filter bar
+            "persistAuthorization": True,
+            "defaultModelsExpandDepth": 2,   # show response schemas expanded
+            "displayRequestDuration": True,  # show ms per request
+            "tryItOutEnabled": True,         # "Try it out" enabled by default
+        },
+    )
+    modified = html.body.decode("utf-8").replace("</head>", CUSTOM_CSS + "</head>")
+    return HTMLResponse(content=modified)
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @app.get("/", include_in_schema=False)
@@ -248,13 +409,34 @@ def health():
         500: {"description": "Internal server error during prediction"},
     },
 )
-def predict(student: StudentInput):
+def predict(
+    student: StudentInput = Body(
+        examples={
+            "average_student": {
+                "summary": "Average Student",
+                "description": "Typical mid-range student — expected score ~67",
+                "value": EXAMPLE_AVERAGE,
+            },
+            "high_performer": {
+                "summary": "High Performer",
+                "description": "Student with strong habits and high support — expected score ~90+",
+                "value": EXAMPLE_HIGH_PERFORMER,
+            },
+            "at_risk_student": {
+                "summary": "At-Risk Student",
+                "description": "Struggling student with limited resources — expected score ~55",
+                "value": EXAMPLE_AT_RISK,
+            },
+        }
+    )
+):
     """
     Submit a complete student profile and receive a predicted exam score.
 
     - All **numeric fields** are validated against realistic dataset ranges.
     - All **categorical fields** only accept the listed string values.
     - Returns a score clamped to the valid range of **55–101 points**.
+    - Use the **Examples dropdown** above to load pre-built student profiles.
     """
     try:
         X        = encode_input(student)
