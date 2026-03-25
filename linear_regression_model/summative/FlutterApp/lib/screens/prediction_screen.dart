@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/student_input.dart';
 import '../services/prediction_service.dart';
-import '../widgets/numeric_field.dart';
-import '../widgets/dropdown_field.dart';
+import '../widgets/slider_field.dart';
+import '../widgets/chip_selector.dart';
 import '../widgets/result_card.dart';
 
 class PredictionScreen extends StatefulWidget {
@@ -13,48 +13,33 @@ class PredictionScreen extends StatefulWidget {
 }
 
 class _PredictionScreenState extends State<PredictionScreen> {
-  final _formKey = GlobalKey<FormState>();
+  // --- Numeric state (driven by sliders) ---
+  int _hoursStudied      = 20;
+  int _attendance        = 80;
+  int _sleepHours        = 7;
+  int _previousScores    = 70;
+  int _tutoringSessions  = 2;
+  int _physicalActivity  = 3;
 
-  // --- Numeric controllers ---
-  final _hoursCtrl       = TextEditingController(text: '23');
-  final _attendanceCtrl  = TextEditingController(text: '84');
-  final _sleepCtrl       = TextEditingController(text: '7');
-  final _prevScoreCtrl   = TextEditingController(text: '73');
-  final _tutoringCtrl    = TextEditingController(text: '0');
-  final _physicalCtrl    = TextEditingController(text: '3');
-
-  // --- Dropdown state ---
-  String _parentalInvolvement      = 'Low';
-  String _accessToResources        = 'High';
-  String _extracurricular          = 'No';
-  String _motivationLevel          = 'Low';
-  String _internetAccess           = 'Yes';
-  String _familyIncome             = 'Low';
-  String _teacherQuality           = 'Medium';
-  String _schoolType               = 'Public';
-  String _peerInfluence            = 'Positive';
-  String _learningDisabilities     = 'No';
-  String _parentalEducationLevel   = 'High School';
-  String _distanceFromHome         = 'Near';
+  // --- Categorical state (driven by chips) ---
+  String _parentalInvolvement    = 'Medium';
+  String _accessToResources      = 'Medium';
+  String _extracurricular        = 'No';
+  String _motivationLevel        = 'Medium';
+  String _internetAccess         = 'Yes';
+  String _familyIncome           = 'Medium';
+  String _teacherQuality         = 'Medium';
+  String _schoolType             = 'Public';
+  String _peerInfluence          = 'Neutral';
+  String _learningDisabilities   = 'No';
+  String _parentalEducationLevel = 'College';
+  String _distanceFromHome       = 'Near';
 
   double? _predictedScore;
-  bool    _isLoading = false;
+  bool    _isLoading   = false;
   String? _errorMessage;
 
-  @override
-  void dispose() {
-    _hoursCtrl.dispose();
-    _attendanceCtrl.dispose();
-    _sleepCtrl.dispose();
-    _prevScoreCtrl.dispose();
-    _tutoringCtrl.dispose();
-    _physicalCtrl.dispose();
-    super.dispose();
-  }
-
   Future<void> _predict() async {
-    if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isLoading    = true;
       _errorMessage = null;
@@ -63,55 +48,55 @@ class _PredictionScreenState extends State<PredictionScreen> {
 
     try {
       final input = StudentInput(
-        hoursStudied:             int.parse(_hoursCtrl.text),
-        attendance:               int.parse(_attendanceCtrl.text),
-        sleepHours:               int.parse(_sleepCtrl.text),
-        previousScores:           int.parse(_prevScoreCtrl.text),
-        tutoringSessions:         int.parse(_tutoringCtrl.text),
-        physicalActivity:         int.parse(_physicalCtrl.text),
-        parentalInvolvement:      _parentalInvolvement,
-        accessToResources:        _accessToResources,
+        hoursStudied:              _hoursStudied,
+        attendance:                _attendance,
+        sleepHours:                _sleepHours,
+        previousScores:            _previousScores,
+        tutoringSessions:          _tutoringSessions,
+        physicalActivity:          _physicalActivity,
+        parentalInvolvement:       _parentalInvolvement,
+        accessToResources:         _accessToResources,
         extracurricularActivities: _extracurricular,
-        motivationLevel:          _motivationLevel,
-        internetAccess:           _internetAccess,
-        familyIncome:             _familyIncome,
-        teacherQuality:           _teacherQuality,
-        schoolType:               _schoolType,
-        peerInfluence:            _peerInfluence,
-        learningDisabilities:     _learningDisabilities,
-        parentalEducationLevel:   _parentalEducationLevel,
-        distanceFromHome:         _distanceFromHome,
+        motivationLevel:           _motivationLevel,
+        internetAccess:            _internetAccess,
+        familyIncome:              _familyIncome,
+        teacherQuality:            _teacherQuality,
+        schoolType:                _schoolType,
+        peerInfluence:             _peerInfluence,
+        learningDisabilities:      _learningDisabilities,
+        parentalEducationLevel:    _parentalEducationLevel,
+        distanceFromHome:          _distanceFromHome,
       );
 
       final score = await PredictionService.predict(input);
       setState(() => _predictedScore = score);
     } catch (e) {
-      setState(() => _errorMessage = e.toString().replaceFirst('Exception: ', ''));
+      setState(() =>
+          _errorMessage = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   void _reset() {
-    _formKey.currentState?.reset();
-    _hoursCtrl.text      = '';
-    _attendanceCtrl.text = '';
-    _sleepCtrl.text      = '';
-    _prevScoreCtrl.text  = '';
-    _tutoringCtrl.text   = '';
-    _physicalCtrl.text   = '';
     setState(() {
-      _parentalInvolvement    = 'Low';
-      _accessToResources      = 'High';
+      _hoursStudied      = 20;
+      _attendance        = 80;
+      _sleepHours        = 7;
+      _previousScores    = 70;
+      _tutoringSessions  = 2;
+      _physicalActivity  = 3;
+      _parentalInvolvement    = 'Medium';
+      _accessToResources      = 'Medium';
       _extracurricular        = 'No';
-      _motivationLevel        = 'Low';
+      _motivationLevel        = 'Medium';
       _internetAccess         = 'Yes';
-      _familyIncome           = 'Low';
+      _familyIncome           = 'Medium';
       _teacherQuality         = 'Medium';
       _schoolType             = 'Public';
-      _peerInfluence          = 'Positive';
+      _peerInfluence          = 'Neutral';
       _learningDisabilities   = 'No';
-      _parentalEducationLevel = 'High School';
+      _parentalEducationLevel = 'College';
       _distanceFromHome       = 'Near';
       _predictedScore         = null;
       _errorMessage           = null;
@@ -120,168 +105,237 @@ class _PredictionScreenState extends State<PredictionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: cs.primary,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Student Score Predictor',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 2,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Mission banner ──────────────────────────────────────
-                _MissionBanner(color: cs.primaryContainer),
-                const SizedBox(height: 20),
+      body: CustomScrollView(
+        slivers: [
+          // ── Collapsing dark gradient header ────────────────────────────
+          SliverAppBar(
+            expandedHeight: 150,
+            floating: false,
+            pinned: true,
+            backgroundColor: const Color(0xFF0F3460),
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: false,
+              titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              title: const Text(
+                'Score Predictor',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A1A2E), Color(0xFF0F3460)],
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 52, 20, 48),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Student Exam Score Predictor',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Identify at-risk students early',
+                      style: TextStyle(
+                          color: Colors.white.withAlpha(180), fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-                // ── Numeric inputs ──────────────────────────────────────
-                _SectionHeader(label: 'Study & Lifestyle', icon: Icons.school),
-                const SizedBox(height: 10),
-                NumericField(
-                  label: 'Hours Studied per Week',
-                  hint: '1 – 44',
-                  controller: _hoursCtrl,
-                  min: 1, max: 44,
-                ),
-                NumericField(
-                  label: 'Attendance (%)',
-                  hint: '60 – 100',
-                  controller: _attendanceCtrl,
-                  min: 60, max: 100,
-                ),
-                NumericField(
-                  label: 'Sleep Hours per Day',
-                  hint: '4 – 10',
-                  controller: _sleepCtrl,
-                  min: 4, max: 10,
-                ),
-                NumericField(
-                  label: 'Previous Exam Score',
-                  hint: '50 – 100',
-                  controller: _prevScoreCtrl,
-                  min: 50, max: 100,
-                ),
-                NumericField(
-                  label: 'Tutoring Sessions per Month',
-                  hint: '0 – 8',
-                  controller: _tutoringCtrl,
-                  min: 0, max: 8,
-                ),
-                NumericField(
-                  label: 'Physical Activity (hrs/week)',
-                  hint: '0 – 6',
-                  controller: _physicalCtrl,
-                  min: 0, max: 6,
+          // ── Scrollable content ──────────────────────────────────────────
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+
+                // ── Academic Profile card ─────────────────────────────────
+                _SectionCard(
+                  title: 'Academic Profile',
+                  icon: Icons.school_rounded,
+                  children: [
+                    SliderField(
+                      label: 'Hours Studied / Week',
+                      icon: Icons.menu_book_rounded,
+                      value: _hoursStudied,
+                      min: 1, max: 44,
+                      onChanged: (v) => setState(() => _hoursStudied = v),
+                    ),
+                    SliderField(
+                      label: 'Attendance',
+                      icon: Icons.calendar_today_rounded,
+                      value: _attendance,
+                      min: 60, max: 100,
+                      unit: '%',
+                      onChanged: (v) => setState(() => _attendance = v),
+                    ),
+                    SliderField(
+                      label: 'Sleep Hours / Day',
+                      icon: Icons.bedtime_rounded,
+                      value: _sleepHours,
+                      min: 4, max: 10,
+                      unit: 'hrs',
+                      onChanged: (v) => setState(() => _sleepHours = v),
+                    ),
+                    SliderField(
+                      label: 'Previous Exam Score',
+                      icon: Icons.assignment_rounded,
+                      value: _previousScores,
+                      min: 50, max: 100,
+                      unit: 'pts',
+                      onChanged: (v) => setState(() => _previousScores = v),
+                    ),
+                    SliderField(
+                      label: 'Tutoring Sessions / Month',
+                      icon: Icons.people_alt_rounded,
+                      value: _tutoringSessions,
+                      min: 0, max: 8,
+                      onChanged: (v) => setState(() => _tutoringSessions = v),
+                    ),
+                    SliderField(
+                      label: 'Physical Activity / Week',
+                      icon: Icons.fitness_center_rounded,
+                      value: _physicalActivity,
+                      min: 0, max: 6,
+                      unit: 'hrs',
+                      onChanged: (v) => setState(() => _physicalActivity = v),
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // ── Categorical inputs ──────────────────────────────────
-                _SectionHeader(label: 'Background & Environment', icon: Icons.home),
-                const SizedBox(height: 10),
-                DropdownField(
-                  label: 'Parental Involvement',
-                  value: _parentalInvolvement,
-                  options: const ['Low', 'Medium', 'High'],
-                  onChanged: (v) => setState(() => _parentalInvolvement = v!),
-                ),
-                DropdownField(
-                  label: 'Access to Resources',
-                  value: _accessToResources,
-                  options: const ['Low', 'Medium', 'High'],
-                  onChanged: (v) => setState(() => _accessToResources = v!),
-                ),
-                DropdownField(
-                  label: 'Extracurricular Activities',
-                  value: _extracurricular,
-                  options: const ['Yes', 'No'],
-                  onChanged: (v) => setState(() => _extracurricular = v!),
-                ),
-                DropdownField(
-                  label: 'Motivation Level',
-                  value: _motivationLevel,
-                  options: const ['Low', 'Medium', 'High'],
-                  onChanged: (v) => setState(() => _motivationLevel = v!),
-                ),
-                DropdownField(
-                  label: 'Internet Access at Home',
-                  value: _internetAccess,
-                  options: const ['Yes', 'No'],
-                  onChanged: (v) => setState(() => _internetAccess = v!),
-                ),
-                DropdownField(
-                  label: 'Family Income Level',
-                  value: _familyIncome,
-                  options: const ['Low', 'Medium', 'High'],
-                  onChanged: (v) => setState(() => _familyIncome = v!),
-                ),
-                DropdownField(
-                  label: 'Teacher Quality',
-                  value: _teacherQuality,
-                  options: const ['Low', 'Medium', 'High'],
-                  onChanged: (v) => setState(() => _teacherQuality = v!),
-                ),
-                DropdownField(
-                  label: 'School Type',
-                  value: _schoolType,
-                  options: const ['Public', 'Private'],
-                  onChanged: (v) => setState(() => _schoolType = v!),
-                ),
-                DropdownField(
-                  label: 'Peer Influence',
-                  value: _peerInfluence,
-                  options: const ['Positive', 'Neutral', 'Negative'],
-                  onChanged: (v) => setState(() => _peerInfluence = v!),
-                ),
-                DropdownField(
-                  label: 'Learning Disabilities',
-                  value: _learningDisabilities,
-                  options: const ['Yes', 'No'],
-                  onChanged: (v) => setState(() => _learningDisabilities = v!),
-                ),
-                DropdownField(
-                  label: 'Parental Education Level',
-                  value: _parentalEducationLevel,
-                  options: const ['High School', 'College', 'Postgraduate'],
-                  onChanged: (v) => setState(() => _parentalEducationLevel = v!),
-                ),
-                DropdownField(
-                  label: 'Distance from Home to School',
-                  value: _distanceFromHome,
-                  options: const ['Near', 'Moderate', 'Far'],
-                  onChanged: (v) => setState(() => _distanceFromHome = v!),
+                // ── Learning Environment card ──────────────────────────────
+                _SectionCard(
+                  title: 'Learning Environment',
+                  icon: Icons.home_rounded,
+                  children: [
+                    ChipSelector(
+                      label: 'Parental Involvement',
+                      icon: Icons.family_restroom_rounded,
+                      value: _parentalInvolvement,
+                      options: const ['Low', 'Medium', 'High'],
+                      onChanged: (v) => setState(() => _parentalInvolvement = v),
+                    ),
+                    ChipSelector(
+                      label: 'Access to Resources',
+                      icon: Icons.library_books_rounded,
+                      value: _accessToResources,
+                      options: const ['Low', 'Medium', 'High'],
+                      onChanged: (v) => setState(() => _accessToResources = v),
+                    ),
+                    ChipSelector(
+                      label: 'Extracurricular Activities',
+                      icon: Icons.sports_soccer_rounded,
+                      value: _extracurricular,
+                      options: const ['Yes', 'No'],
+                      onChanged: (v) => setState(() => _extracurricular = v),
+                    ),
+                    ChipSelector(
+                      label: 'Motivation Level',
+                      icon: Icons.bolt_rounded,
+                      value: _motivationLevel,
+                      options: const ['Low', 'Medium', 'High'],
+                      onChanged: (v) => setState(() => _motivationLevel = v),
+                    ),
+                    ChipSelector(
+                      label: 'Internet Access at Home',
+                      icon: Icons.wifi_rounded,
+                      value: _internetAccess,
+                      options: const ['Yes', 'No'],
+                      onChanged: (v) => setState(() => _internetAccess = v),
+                    ),
+                    ChipSelector(
+                      label: 'Family Income',
+                      icon: Icons.account_balance_wallet_rounded,
+                      value: _familyIncome,
+                      options: const ['Low', 'Medium', 'High'],
+                      onChanged: (v) => setState(() => _familyIncome = v),
+                    ),
+                    ChipSelector(
+                      label: 'Teacher Quality',
+                      icon: Icons.stars_rounded,
+                      value: _teacherQuality,
+                      options: const ['Low', 'Medium', 'High'],
+                      onChanged: (v) => setState(() => _teacherQuality = v),
+                    ),
+                    ChipSelector(
+                      label: 'School Type',
+                      icon: Icons.account_balance_rounded,
+                      value: _schoolType,
+                      options: const ['Public', 'Private'],
+                      onChanged: (v) => setState(() => _schoolType = v),
+                    ),
+                    ChipSelector(
+                      label: 'Peer Influence',
+                      icon: Icons.group_rounded,
+                      value: _peerInfluence,
+                      options: const ['Positive', 'Neutral', 'Negative'],
+                      onChanged: (v) => setState(() => _peerInfluence = v),
+                    ),
+                    ChipSelector(
+                      label: 'Learning Disabilities',
+                      icon: Icons.accessibility_new_rounded,
+                      value: _learningDisabilities,
+                      options: const ['Yes', 'No'],
+                      onChanged: (v) =>
+                          setState(() => _learningDisabilities = v),
+                    ),
+                    ChipSelector(
+                      label: 'Parental Education',
+                      icon: Icons.school_rounded,
+                      value: _parentalEducationLevel,
+                      options: const ['High School', 'College', 'Postgraduate'],
+                      onChanged: (v) =>
+                          setState(() => _parentalEducationLevel = v),
+                    ),
+                    ChipSelector(
+                      label: 'Distance from School',
+                      icon: Icons.location_on_rounded,
+                      value: _distanceFromHome,
+                      options: const ['Near', 'Moderate', 'Far'],
+                      onChanged: (v) => setState(() => _distanceFromHome = v),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 28),
 
-                // ── Action buttons ──────────────────────────────────────
+                // ── Action buttons ─────────────────────────────────────────
                 Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _reset,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reset'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _reset,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Reset'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 20),
+                        side: const BorderSide(color: Color(0xFF0F3460)),
+                        foregroundColor: const Color(0xFF0F3460),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      flex: 2,
                       child: FilledButton.icon(
                         onPressed: _isLoading ? null : _predict,
                         icon: _isLoading
@@ -293,10 +347,15 @@ class _PredictionScreenState extends State<PredictionScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(Icons.analytics),
-                        label: Text(_isLoading ? 'Predicting…' : 'Predict Score'),
+                            : const Icon(Icons.analytics_rounded),
+                        label: Text(
+                            _isLoading ? 'Predicting…' : 'Predict Score'),
                         style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F3460),
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           textStyle: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -309,46 +368,10 @@ class _PredictionScreenState extends State<PredictionScreen> {
 
                 const SizedBox(height: 24),
 
-                // ── Result / Error display ──────────────────────────────
-                if (_predictedScore != null)
-                  ResultCard(score: _predictedScore!),
-
-                if (_errorMessage != null)
-                  _ErrorCard(message: _errorMessage!),
-
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Supporting private widgets ──────────────────────────────────────────────
-
-class _MissionBanner extends StatelessWidget {
-  final Color color;
-  const _MissionBanner({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lightbulb_outline, size: 28),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              "Enter a student's profile to predict their exam score "
-              'and identify intervention opportunities early.',
-              style: Theme.of(context).textTheme.bodyMedium,
+                // ── Result / Error ─────────────────────────────────────────
+                if (_predictedScore != null) ResultCard(score: _predictedScore!),
+                if (_errorMessage != null) _ErrorCard(message: _errorMessage!),
+              ]),
             ),
           ),
         ],
@@ -357,31 +380,52 @@ class _MissionBanner extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String label;
+// ─── Section card wrapper ─────────────────────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  final String title;
   final IconData icon;
-  const _SectionHeader({required this.label, required this.icon});
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(icon, color: cs.primary, size: 20),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.bold,
-              ),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: const Color(0xFF0F3460), size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF0F3460),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20, color: Color(0xFFE8EDF8)),
+            ...children,
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(child: Divider(color: cs.primary.withAlpha(80))),
-      ],
+      ),
     );
   }
 }
+
+// ─── Error card ───────────────────────────────────────────────────────────────
 
 class _ErrorCard extends StatelessWidget {
   final String message;
@@ -392,23 +436,19 @@ class _ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.errorContainer,
+        color: const Color(0xFFFFEBEE),
+        border: Border.all(color: const Color(0xFFEF9A9A)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.error_outline,
-            color: Theme.of(context).colorScheme.onErrorContainer,
-          ),
+          const Icon(Icons.error_outline, color: Color(0xFFC62828)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onErrorContainer,
-              ),
+              style: const TextStyle(color: Color(0xFFC62828)),
             ),
           ),
         ],
