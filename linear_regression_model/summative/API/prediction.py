@@ -354,10 +354,141 @@ CUSTOM_CSS = """
     font-weight: 600;
   }
 
+  /* ── Load Sample button (injected via JS) ── */
+  .load-sample-btn {
+    background: #0f3460;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .load-sample-btn:hover { background: #1a4a80; }
+
+  /* ── Range hint box (injected via JS) ── */
+  .range-hint-box {
+    background: #f0f4ff;
+    border: 1px solid #c7d4f0;
+    border-left: 4px solid #0f3460;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #222;
+  }
+  .range-hint-box strong { color: #0f3460; }
+  .range-hint-box table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .range-hint-box th {
+    background: #0f3460; color: white;
+    padding: 5px 10px; text-align: left; font-size: 12px;
+  }
+  .range-hint-box td { padding: 4px 10px; border-bottom: 1px solid #dde4f5; }
+  .range-hint-box tr:last-child td { border-bottom: none; }
+
   /* ── General body ── */
   body { background: #f8f9fc; }
   .swagger-ui { font-family: 'Inter', 'Segoe UI', sans-serif; }
 </style>
+"""
+
+CUSTOM_JS = """
+<script>
+const SAMPLE_DATA = {
+  "Hours_Studied": 23,
+  "Attendance": 84,
+  "Sleep_Hours": 7,
+  "Previous_Scores": 73,
+  "Tutoring_Sessions": 2,
+  "Physical_Activity": 3,
+  "Parental_Involvement": "Medium",
+  "Access_to_Resources": "High",
+  "Extracurricular_Activities": "Yes",
+  "Motivation_Level": "Medium",
+  "Internet_Access": "Yes",
+  "Family_Income": "Medium",
+  "Teacher_Quality": "Medium",
+  "School_Type": "Public",
+  "Peer_Influence": "Positive",
+  "Learning_Disabilities": "No",
+  "Parental_Education_Level": "College",
+  "Distance_from_Home": "Near"
+};
+
+const RANGE_HTML = `
+<div class="range-hint-box">
+  <strong>📋 Field Reference — Valid inputs for each field</strong>
+  <table>
+    <tr><th>Field</th><th>Type</th><th>Valid Values</th></tr>
+    <tr><td>Hours_Studied</td><td>number</td><td>1 – 44</td></tr>
+    <tr><td>Attendance</td><td>number</td><td>60 – 100 (%)</td></tr>
+    <tr><td>Sleep_Hours</td><td>number</td><td>4 – 10</td></tr>
+    <tr><td>Previous_Scores</td><td>number</td><td>50 – 100</td></tr>
+    <tr><td>Tutoring_Sessions</td><td>number</td><td>0 – 8 (per month)</td></tr>
+    <tr><td>Physical_Activity</td><td>number</td><td>0 – 6 (hrs/week)</td></tr>
+    <tr><td>Parental_Involvement</td><td>string</td><td>"Low" | "Medium" | "High"</td></tr>
+    <tr><td>Access_to_Resources</td><td>string</td><td>"Low" | "Medium" | "High"</td></tr>
+    <tr><td>Extracurricular_Activities</td><td>string</td><td>"Yes" | "No"</td></tr>
+    <tr><td>Motivation_Level</td><td>string</td><td>"Low" | "Medium" | "High"</td></tr>
+    <tr><td>Internet_Access</td><td>string</td><td>"Yes" | "No"</td></tr>
+    <tr><td>Family_Income</td><td>string</td><td>"Low" | "Medium" | "High"</td></tr>
+    <tr><td>Teacher_Quality</td><td>string</td><td>"Low" | "Medium" | "High"</td></tr>
+    <tr><td>School_Type</td><td>string</td><td>"Public" | "Private"</td></tr>
+    <tr><td>Peer_Influence</td><td>string</td><td>"Positive" | "Neutral" | "Negative"</td></tr>
+    <tr><td>Learning_Disabilities</td><td>string</td><td>"Yes" | "No"</td></tr>
+    <tr><td>Parental_Education_Level</td><td>string</td><td>"High School" | "College" | "Postgraduate"</td></tr>
+    <tr><td>Distance_from_Home</td><td>string</td><td>"Near" | "Moderate" | "Far"</td></tr>
+  </table>
+</div>`;
+
+function loadSampleIntoTextarea(textarea) {
+  const setter = Object.getOwnPropertyDescriptor(
+    window.HTMLTextAreaElement.prototype, 'value'
+  ).set;
+  setter.call(textarea, JSON.stringify(SAMPLE_DATA, null, 2));
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function injectPredictHelpers() {
+  document.querySelectorAll('.opblock').forEach(block => {
+    const path = block.querySelector('.opblock-summary-path');
+    if (!path || !path.textContent.trim().includes('/predict')) return;
+
+    const textarea = block.querySelector('textarea.body-param__text');
+    if (!textarea || textarea.dataset.helperAdded) return;
+    textarea.dataset.helperAdded = 'true';
+
+    // Range hint box
+    const hintDiv = document.createElement('div');
+    hintDiv.innerHTML = RANGE_HTML;
+
+    // Load Sample button
+    const btn = document.createElement('button');
+    btn.className = 'load-sample-btn';
+    btn.innerHTML = '📋 Load Sample Values';
+    btn.type = 'button';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadSampleIntoTextarea(textarea);
+    });
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(hintDiv);
+    wrapper.appendChild(btn);
+    textarea.parentNode.insertBefore(wrapper, textarea);
+  });
+}
+
+const observer = new MutationObserver(injectPredictHelpers);
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
 """
 
 
@@ -376,6 +507,7 @@ async def custom_swagger_ui_html():
         },
     )
     modified = html.body.decode("utf-8").replace("</head>", CUSTOM_CSS + "</head>")
+    modified = modified.replace("</body>", CUSTOM_JS + "</body>")
     return HTMLResponse(content=modified)
 
 
