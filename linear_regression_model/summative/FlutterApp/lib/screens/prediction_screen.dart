@@ -6,7 +6,14 @@ import '../widgets/chip_selector.dart';
 import '../widgets/result_card.dart';
 
 class PredictionScreen extends StatefulWidget {
-  const PredictionScreen({super.key});
+  final bool isDarkMode;
+  final void Function(bool) onToggleDarkMode;
+
+  const PredictionScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleDarkMode,
+  });
 
   @override
   State<PredictionScreen> createState() => _PredictionScreenState();
@@ -241,15 +248,18 @@ class _PredictionScreenState extends State<PredictionScreen> {
 
   Widget _buildStep2() {
     if (_isLoading) {
-      return const Center(
+      final mutedColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF94A3B8)
+          : const Color(0xFF64748B);
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: _kNavy, strokeWidth: 3),
-            SizedBox(height: 20),
+            const CircularProgressIndicator(color: _kNavy, strokeWidth: 3),
+            const SizedBox(height: 20),
             Text(
               'Analysing student profile…',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+              style: TextStyle(color: mutedColor, fontSize: 14),
             ),
           ],
         ),
@@ -305,14 +315,16 @@ class _PredictionScreenState extends State<PredictionScreen> {
             currentStep: _currentStep,
             titles: _stepTitles,
             subtitles: _stepSubs,
+            isDarkMode: widget.isDarkMode,
+            onToggleDarkMode: widget.onToggleDarkMode,
           ),
 
-          // ── White content area (rounded top) ─────────────────────────────
+          // ── Content area (rounded top) ────────────────────────────────────
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF4F6FC),
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
                   topLeft:  Radius.circular(28),
                   topRight: Radius.circular(28),
                 ),
@@ -383,11 +395,15 @@ class _AppHeader extends StatelessWidget {
   final int currentStep;
   final List<String> titles;
   final List<String> subtitles;
+  final bool isDarkMode;
+  final void Function(bool) onToggleDarkMode;
 
   const _AppHeader({
     required this.currentStep,
     required this.titles,
     required this.subtitles,
+    required this.isDarkMode,
+    required this.onToggleDarkMode,
   });
 
   @override
@@ -434,6 +450,22 @@ class _AppHeader extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
                 ),
+              ),
+              const Spacer(),
+              Icon(
+                isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                color: Colors.white54,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Switch(
+                value: isDarkMode,
+                onChanged: onToggleDarkMode,
+                activeThumbColor: Colors.white,
+                activeTrackColor: Colors.white24,
+                inactiveThumbColor: Colors.white54,
+                inactiveTrackColor: Colors.white12,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ],
           ),
@@ -519,36 +551,41 @@ class _StepDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark      = Theme.of(context).brightness == Brightness.dark;
     final isCompleted = current > index;
     final isActive    = current == index;
+
+    final inactiveDotBg     = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final inactiveDotBorder = isDark ? const Color(0xFF4A5568) : const Color(0xFFCDD5F0);
+    final inactiveTextColor = isDark ? const Color(0xFF4A5568) : const Color(0xFFB0B8D0);
 
     return Column(
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutBack,
+          curve: Curves.easeOut,
           width:  isActive ? 38 : 30,
           height: isActive ? 38 : 30,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isCompleted || isActive
                 ? const Color(0xFF0F3460)
-                : Colors.white,
+                : inactiveDotBg,
             border: Border.all(
               color: isCompleted || isActive
                   ? const Color(0xFF0F3460)
-                  : const Color(0xFFCDD5F0),
+                  : inactiveDotBorder,
               width: 2,
             ),
-            boxShadow: isActive
-                ? const [
-                    BoxShadow(
-                      color: Color(0x440F3460),
-                      blurRadius: 12,
-                      spreadRadius: 3,
-                    )
-                  ]
-                : null,
+            boxShadow: [
+              BoxShadow(
+                color: isActive
+                    ? const Color(0x440F3460)
+                    : Colors.transparent,
+                blurRadius: isActive ? 12.0 : 0.0,
+                spreadRadius: isActive ? 3.0 : 0.0,
+              ),
+            ],
           ),
           child: Center(
             child: isCompleted
@@ -557,7 +594,7 @@ class _StepDot extends StatelessWidget {
                 : Text(
                     '${index + 1}',
                     style: TextStyle(
-                      color: isActive ? Colors.white : const Color(0xFFB0B8D0),
+                      color: isActive ? Colors.white : inactiveTextColor,
                       fontWeight: FontWeight.bold,
                       fontSize: isActive ? 15 : 12,
                     ),
@@ -572,8 +609,8 @@ class _StepDot extends StatelessWidget {
             fontWeight:
                 isActive ? FontWeight.bold : FontWeight.normal,
             color: isActive
-                ? const Color(0xFF0F3460)
-                : const Color(0xFFB0B8D0),
+                ? (isDark ? Colors.white : const Color(0xFF0F3460))
+                : inactiveTextColor,
           ),
         ),
       ],
@@ -587,6 +624,9 @@ class _StepLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor = isDark ? const Color(0xFF2D3748) : const Color(0xFFE2E8F5);
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 20, left: 4, right: 4),
@@ -594,9 +634,7 @@ class _StepLine extends StatelessWidget {
           duration: const Duration(milliseconds: 400),
           height: 2,
           decoration: BoxDecoration(
-            color: filled
-                ? const Color(0xFF0F3460)
-                : const Color(0xFFE2E8F5),
+            color: filled ? const Color(0xFF0F3460) : inactiveColor,
             borderRadius: BorderRadius.circular(1),
           ),
         ),
@@ -633,12 +671,14 @@ class _NavBar extends StatelessWidget {
           // Left: Back or Try Again
           if (currentStep == 1)
             _outlineBtn(
+              context: context,
               icon: Icons.arrow_back_rounded,
               label: 'Back',
               onTap: onBack,
             ),
           if (currentStep == 2)
             _outlineBtn(
+              context: context,
               icon: Icons.refresh_rounded,
               label: 'Try Again',
               onTap: onReset,
@@ -668,6 +708,7 @@ class _NavBar extends StatelessWidget {
               label: Text(currentStep == 0 ? 'Next' : 'Predict Score'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF0F3460),
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                     vertical: 14, horizontal: 24),
                 shape: RoundedRectangleBorder(
@@ -685,18 +726,22 @@ class _NavBar extends StatelessWidget {
   }
 
   Widget _outlineBtn({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final btnColor = isDark ? Colors.white70 : const Color(0xFF0F3460);
+
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 18),
       label: Text(label),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-        side: const BorderSide(color: Color(0xFF0F3460)),
-        foregroundColor: const Color(0xFF0F3460),
+        side: BorderSide(color: btnColor),
+        foregroundColor: btnColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

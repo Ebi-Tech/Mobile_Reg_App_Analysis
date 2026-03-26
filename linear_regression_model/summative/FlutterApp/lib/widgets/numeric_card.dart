@@ -30,23 +30,32 @@ class _NumericCardState extends State<NumericCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg         = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final unfocusedBorder = isDark ? const Color(0xFF2D3748) : const Color(0xFFE8EDF8);
+    final iconBadgeBg    = isDark ? const Color(0xFF2D3748) : const Color(0xFFF0F4FF);
+    final labelColor     = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final inputTextColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final hintColor      = isDark ? const Color(0xFF4A5568) : const Color(0xFFCDD5F0);
+    final rangeColor     = isDark ? const Color(0xFF4A5568) : const Color(0xFFB0B8D0);
+
     return Focus(
       onFocusChange: (f) => setState(() => _focused = f),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _focused ? _kNavy : const Color(0xFFE8EDF8),
+            color: _focused ? _kNavy : unfocusedBorder,
             width: _focused ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: _focused
                   ? _kNavy.withAlpha(35)
-                  : Colors.black.withAlpha(10),
+                  : Colors.black.withAlpha(isDark ? 30 : 10),
               blurRadius: _focused ? 14 : 4,
               offset: const Offset(0, 3),
             ),
@@ -62,13 +71,15 @@ class _NumericCardState extends State<NumericCard> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: _focused ? _kNavy : const Color(0xFFF0F4FF),
+                color: _focused ? _kNavy : iconBadgeBg,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 widget.icon,
                 size: 17,
-                color: _focused ? Colors.white : _kNavy,
+                color: _focused
+                    ? Colors.white
+                    : (isDark ? const Color(0xFF94A3B8) : _kNavy),
               ),
             ),
             const SizedBox(height: 10),
@@ -76,9 +87,9 @@ class _NumericCardState extends State<NumericCard> {
             // Field label
             Text(
               widget.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: labelColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -89,10 +100,10 @@ class _NumericCardState extends State<NumericCard> {
               controller: widget.controller,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A2E),
+                color: inputTextColor,
                 height: 1.2,
               ),
               decoration: InputDecoration(
@@ -100,10 +111,10 @@ class _NumericCardState extends State<NumericCard> {
                 contentPadding: EdgeInsets.zero,
                 isDense: true,
                 hintText: '—',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFCDD5F0),
+                  color: hintColor,
                   height: 1.2,
                 ),
                 errorStyle: const TextStyle(fontSize: 10, height: 1.2),
@@ -124,7 +135,7 @@ class _NumericCardState extends State<NumericCard> {
             Text(
               'Range: ${widget.min} – ${widget.max}'
               '${widget.unit != null ? ' ${widget.unit}' : ''}',
-              style: const TextStyle(fontSize: 11, color: Color(0xFFB0B8D0)),
+              style: TextStyle(fontSize: 11, color: rangeColor),
             ),
           ],
         ),

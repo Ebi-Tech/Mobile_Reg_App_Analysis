@@ -28,6 +28,11 @@ class ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark     = Theme.of(context).brightness == Brightness.dark;
+    final cardBg     = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final mutedText  = isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600;
+    final arcTrack   = isDark ? const Color(0xFF2D3748) : const Color(0xFFEEF1FA);
+
     final color = _color(score);
     // Normalize score from [55, 101] to [0.0, 1.0]
     final targetProgress = ((score - 55) / 46).clamp(0.0, 1.0);
@@ -42,7 +47,7 @@ class ResultCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -58,7 +63,7 @@ class ResultCard extends StatelessWidget {
               Text(
                 'Predicted Exam Score',
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: mutedText,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.4,
@@ -71,7 +76,11 @@ class ResultCard extends StatelessWidget {
                 width: 190,
                 height: 190,
                 child: CustomPaint(
-                  painter: _ArcPainter(progress: animProgress, color: color),
+                  painter: _ArcPainter(
+                    progress: animProgress,
+                    color: color,
+                    trackColor: arcTrack,
+                  ),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -132,14 +141,17 @@ class ResultCard extends StatelessWidget {
                 child: Text(
                   _advice(score),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: mutedText, fontSize: 13),
                 ),
               ),
 
               const SizedBox(height: 8),
               Text(
                 'Valid range: 55 – 101 pts',
-                style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                style: TextStyle(
+                  color: isDark ? const Color(0xFF4A5568) : Colors.grey.shade400,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -152,8 +164,13 @@ class ResultCard extends StatelessWidget {
 class _ArcPainter extends CustomPainter {
   final double progress;
   final Color color;
+  final Color trackColor;
 
-  const _ArcPainter({required this.progress, required this.color});
+  const _ArcPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -164,7 +181,7 @@ class _ArcPainter extends CustomPainter {
     const totalSweep = math.pi * 1.5;
 
     final trackPaint = Paint()
-      ..color = const Color(0xFFEEF1FA)
+      ..color = trackColor
       ..strokeWidth = 18
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -188,5 +205,5 @@ class _ArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ArcPainter old) =>
-      old.progress != progress || old.color != color;
+      old.progress != progress || old.color != color || old.trackColor != trackColor;
 }

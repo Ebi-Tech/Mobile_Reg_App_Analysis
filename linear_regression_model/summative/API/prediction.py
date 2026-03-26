@@ -73,20 +73,20 @@ app = FastAPI(
         "url": "https://mobile-reg-app-analysis.onrender.com",
     },
     openapi_tags=tags_metadata,
-    docs_url=None,   # We serve a custom /docs below
+    docs_url=None,   # Serve a custom /docs
     redoc_url="/redoc",
 )
 
-# ---------------------------------------------------------------------------
-# CORS — specific origins (no wildcard *) for Excellent rubric grade
-# ---------------------------------------------------------------------------
+
+# CORS configuration to allow requests from local development environments and the deployed frontend
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost",
         "http://localhost:3000",
         "http://localhost:8080",
-        "http://10.0.2.2",          # Android emulator → host machine
+        "http://10.0.2.2",          # Android emulator 
         "http://10.0.2.2:8000",
         "https://mobile-reg-app-analysis.onrender.com",
     ],
