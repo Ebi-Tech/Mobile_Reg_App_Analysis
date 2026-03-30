@@ -21,7 +21,7 @@ Millions of students underperform not because of ability, but due to preventable
 ---
 
 ## Video Demo
-> 🎥 _[YouTube link](https://youtu.be/jL8DSxOBXXc) — added after recording (Task 4)_
+> 🎥 _[YouTube link](https://youtu.be/jL8DSxOBXXc)_
 
 ---
 
